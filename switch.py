@@ -86,7 +86,6 @@ class SurePetcareSwitch(CoordinatorEntity, SwitchEntity):
 
         self._attr_available = bool(self._state)
 
-        self._attr_device_class = None if not device_class else device_class
         self._attr_name: str = f"{type_name} {self._name}"
         self._attr_unique_id = f"{self._surepy_entity.household_id}-{self._id}"
 
