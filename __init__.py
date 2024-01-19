@@ -197,6 +197,12 @@ class SurePetcareAPI:
             )
         )
 
+        self.hass.async_add_job(
+            self.hass.config_entries.async_forward_entry_setup(  # type: ignore
+                self.config_entry, "switch"
+            )
+        )
+
         surepy_entities: list[SurepyEntity] = self.coordinator.data.values()
 
         pet_ids = [
