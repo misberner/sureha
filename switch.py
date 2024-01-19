@@ -11,6 +11,10 @@ from surepy.entities import SurepyEntity
 from surepy.entities.devices import Feeder as SureFeeder
 from surepy.entities.pet import Pet as SurePet
 from surepy.enums import EntityType
+from surepy.const import (
+    BASE_RESOURCE,
+    DEVICE_TAG_RESOURCE,
+)
 
 # pylint: disable=relative-beyond-top-level
 from . import SurePetcareAPI
@@ -165,8 +169,30 @@ class PetFeederAccess(SurePetcareSwitch):
 
     async def async_turn_on(self):
         pet = self._coordinator.data[self._id]
-        await self._spc.surepy.sac._add_tag_to_device(self._feeder_id, pet.tag_id)
+        await _add_tag_to_device(self._spc, self._feeder_id, pet.tag_id)
+        await self.coordinator.async_request_refresh()
 
     async def async_turn_off(self):
         pet = self._coordinator.data[self._id]
-        await self._spc.surepy.sac._remove_tag_from_device(self._feeder_id, pet.tag_id)
+        await _remove_tag_from_device(self._spc, self._feeder_id, pet.tag_id)
+        await self.coordinator.async_request_refresh()
+
+
+async def _add_tag_to_device(spc: SurePetcareAPI, device_id: int, tag_id: int) -> dict[str, Any] | None:
+    """Add the specified tag ID to the specified device ID"""
+    resource = DEVICE_TAG_RESOURCE.format(
+        BASE_RESOURCE=BASE_RESOURCE, device_id=device_id, tag_id=tag_id
+    )
+
+    if response := await spc.surepy.sac.call(method="PUT", resource=resource, json={}):
+        return response
+
+
+async def _remove_tag_from_device(spc: SurePetcareAPI, device_id: int, tag_id: int) -> dict[str, Any] | None:
+    """Removes the specified tag ID from the specified device ID"""
+    resource = DEVICE_TAG_RESOURCE.format(
+        BASE_RESOURCE=BASE_RESOURCE, device_id=device_id, tag_id=tag_id
+    )
+
+    if response := await spc.surepy.sac.call(method="DELETE", resource=resource):
+        return response
