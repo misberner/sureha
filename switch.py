@@ -163,10 +163,10 @@ class PetFeederAccess(SurePetcareSwitch):
 
         return None
 
-    async def turn_on(self):
+    async def async_turn_on(self):
         pet = self._coordinator.data[self._id]
         await self._spc.surepy.sac._add_tag_to_device(self._feeder_id, pet.tag_id)
 
-    async def turn_off(self):
+    async def async_turn_off(self):
         pet = self._coordinator.data[self._id]
         await self._spc.surepy.sac._remove_tag_from_device(self._feeder_id, pet.tag_id)
