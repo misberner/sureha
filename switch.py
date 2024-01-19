@@ -184,7 +184,7 @@ async def _add_tag_to_device(spc: SurePetcareAPI, device_id: int, tag_id: int) -
         BASE_RESOURCE=BASE_RESOURCE, device_id=device_id, tag_id=tag_id
     )
 
-    if response := await spc.surepy.sac.call(method="PUT", resource=resource, json={}):
+    if response := await spc.surepy.sac.call(method="PUT", resource=resource, data={}):
         return response
 
 
