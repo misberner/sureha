@@ -3,11 +3,14 @@ from __future__ import annotations
 
 from typing import Any, cast
 
+from datetime import datetime
+
 from homeassistant.components.sensor import SensorEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
     ATTR_VOLTAGE,
     DEVICE_CLASS_BATTERY,
+    DEVICE_CLASS_TIMESTAMP,
     MASS_GRAMS,
     PERCENTAGE,
     VOLUME_MILLILITERS,
@@ -22,6 +25,7 @@ from surepy.entities.devices import (
     Flap as SureFlap,
     SurepyDevice,
 )
+from surepy.entities.pet import Pet as SurePet
 from surepy.enums import EntityType, LockState
 
 # pylint: disable=relative-beyond-top-level
@@ -77,6 +81,11 @@ async def async_setup_entry(
                 )
 
             entities.append(Feeder(spc.coordinator, surepy_entity.id, spc))
+
+        elif surepy_entity.type == EntityType.PET:
+            entities.append(
+                PetFeedTime(spc.coordinator, surepy_entity.id, spc)
+            )
 
         if surepy_entity.type in [
             EntityType.CAT_FLAP,
@@ -353,3 +362,47 @@ class Battery(SurePetcareSensor):
             }
 
         return attrs
+
+
+class PetFeedTime(SurePetcareSensor):
+    """Sure Petcare Pet Feed Time."""
+
+    _surepy_entity: SurePet
+
+    def __init__(self, coordinator, _id: int, spc: SurePetcareAPI) -> None:
+        """Initialize a Sure Petcare Pet Fed Time Sensor."""
+
+        super().__init__(coordinator, _id, spc)
+
+        # picture of the pet that can be added via the sure app/website
+        self._attr_entity_picture = self._surepy_entity.photo_url
+
+        self._attr_name = f"{self._attr_name} Last Feed Time"
+
+        self._attr_device_class = DEVICE_CLASS_TIMESTAMP
+        self._attr_unique_id = (
+            f"{self._surepy_entity.household_id}-{self._surepy_entity.id}-last-feed-time"
+        )
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        """Return the additional attrs."""
+
+        pet: SurePet
+        attrs: dict[str, Any] = {}
+
+        if pet := self._coordinator.data[self._id]:
+            attrs = {
+                **pet.raw_data(),
+            }
+
+        return attrs
+
+    @property
+    def state(self) -> datetime | None:
+        pet: SurePet
+
+        if pet := self._coordinator.data[self._id]:
+            return pet.last_lunch
+
+        return None
