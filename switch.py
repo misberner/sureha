@@ -1,6 +1,7 @@
 """Support for Sure PetCare Flaps/Pets binary sensors."""
 from __future__ import annotations
 
+import asyncio
 from typing import Any
 
 from homeassistant.components.switch import SwitchEntity
@@ -170,12 +171,16 @@ class PetFeederAccess(SurePetcareSwitch):
     async def async_turn_on(self):
         pet = self._coordinator.data[self._id]
         await _add_tag_to_device(self._spc, self._feeder_id, pet.tag_id)
-        await self.coordinator.async_request_refresh()
+        while not self.is_on:
+            await asyncio.sleep(2)
+            await self.coordinator.async_request_refresh()
 
     async def async_turn_off(self):
         pet = self._coordinator.data[self._id]
         await _remove_tag_from_device(self._spc, self._feeder_id, pet.tag_id)
-        await self.coordinator.async_request_refresh()
+        while self.is_on:
+            await asyncio.sleep(2)
+            await self.coordinator.async_request_refresh()
 
 
 async def _add_tag_to_device(spc: SurePetcareAPI, device_id: int, tag_id: int) -> dict[str, Any] | None:
